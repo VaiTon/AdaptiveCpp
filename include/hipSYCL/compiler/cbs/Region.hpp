@@ -11,10 +11,9 @@
 #ifndef RV_REGION_H
 #define RV_REGION_H
 
-#include <llvm/ADT/SmallPtrSet.h>
-#include <llvm/ADT/SmallVector.h>
-#include <llvm/Analysis/LoopInfo.h>
-#include <llvm/IR/CFG.h>
+#include "llvm/ADT/SmallPtrSet.h"
+#include "llvm/Analysis/LoopInfo.h"
+#include "llvm/IR/CFG.h"
 
 #include <set>
 #include <stack>
