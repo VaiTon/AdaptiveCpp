@@ -15,64 +15,58 @@
 #include <llvm/IR/Instructions.h>
 #include <llvm/IR/Module.h>
 
-
-namespace hipsycl {
-namespace compiler {
+using namespace llvm;
+using namespace hipsycl::compiler;
 
 namespace {
 
-
-bool applyKnownGroupSize(llvm::Module &M, int KnownGroupSize,
-                         llvm::StringRef GetGroupSizeBuiltinName,
-                         llvm::StringRef GetLocalIdBuiltinName) {
+bool applyKnownGroupSize(Module &M, int KnownGroupSize, StringRef GetGroupSizeBuiltinName,
+                         StringRef GetLocalIdBuiltinName) {
 
   // First create replacement functions for GetGroupSizeBuiltinName
   // which directly return the known group size, and replace all
   // uses.
-  if(auto* GetGroupSizeF = M.getFunction(GetGroupSizeBuiltinName)) {
-    std::string NewFunctionName = std::string{GetGroupSizeBuiltinName}+"_known_size";
+  if (auto *GetGroupSizeF = M.getFunction(GetGroupSizeBuiltinName)) {
+    std::string NewFunctionName = std::string{GetGroupSizeBuiltinName} + "_known_size";
 
-    auto *NewGetGroupSizeF = llvm::dyn_cast<llvm::Function>(
+    auto *NewGetGroupSizeF = llvm::dyn_cast<Function>(
         M.getOrInsertFunction(NewFunctionName, GetGroupSizeF->getFunctionType(),
                               GetGroupSizeF->getAttributes())
             .getCallee());
-    if(!NewGetGroupSizeF)
+    if (!NewGetGroupSizeF)
       return false;
 
-    if(!NewGetGroupSizeF->hasFnAttribute(llvm::Attribute::AlwaysInline))
-      NewGetGroupSizeF->addFnAttr(llvm::Attribute::AlwaysInline);
+    if (!NewGetGroupSizeF->hasFnAttribute(Attribute::AlwaysInline))
+      NewGetGroupSizeF->addFnAttr(Attribute::AlwaysInline);
 
-    llvm::BasicBlock *BB =
-        llvm::BasicBlock::Create(M.getContext(), "", NewGetGroupSizeF);
+    BasicBlock *BB = BasicBlock::Create(M.getContext(), "", NewGetGroupSizeF);
 
-    auto *ReturnedIntType = llvm::dyn_cast<llvm::IntegerType>(GetGroupSizeF->getReturnType());
-    if(!ReturnedIntType)
+    auto *ReturnedIntType = llvm::dyn_cast<IntegerType>(GetGroupSizeF->getReturnType());
+    if (!ReturnedIntType)
       return false;
 
-    llvm::Constant *ReturnedValue = llvm::ConstantInt::get(
-        M.getContext(), llvm::APInt(ReturnedIntType->getBitWidth(), KnownGroupSize));
+    Constant *ReturnedValue =
+        ConstantInt::get(M.getContext(), APInt(ReturnedIntType->getBitWidth(), KnownGroupSize));
 
-    llvm::ReturnInst::Create(M.getContext(), ReturnedValue, BB);
+    ReturnInst::Create(M.getContext(), ReturnedValue, BB);
 
     GetGroupSizeF->replaceNonMetadataUsesWith(NewGetGroupSizeF);
   }
 
   // Insert __builtin_assume(0 <= local_id); __builtin_assume(local_id < group_size);
   // for every call to GetLocalIdBuiltinName
-  if(!insertRangeAssumptionForBuiltinCalls(M, GetLocalIdBuiltinName, 0, KnownGroupSize))
+  if (!insertRangeAssumptionForBuiltinCalls(M, GetLocalIdBuiltinName, 0, KnownGroupSize))
     return false;
 
   return true;
 }
 
-}
+} // namespace
 
 KnownGroupSizeOptPass::KnownGroupSizeOptPass(int GroupSizeX, int GroupSizeY, int GroupSizeZ)
     : KnownGroupSizeX{GroupSizeX}, KnownGroupSizeY{GroupSizeY}, KnownGroupSizeZ{GroupSizeZ} {}
 
-
-llvm::PreservedAnalyses KnownGroupSizeOptPass::run(llvm::Module &M,
-                                                        llvm::ModuleAnalysisManager &MAM) {
+PreservedAnalyses KnownGroupSizeOptPass::run(Module &M, ModuleAnalysisManager &MAM) {
   if (KnownGroupSizeX > 0) {
     applyKnownGroupSize(M, KnownGroupSizeX, "__acpp_sscp_get_local_size_x",
                         "__acpp_sscp_get_local_id_x");
@@ -88,10 +82,5 @@ llvm::PreservedAnalyses KnownGroupSizeOptPass::run(llvm::Module &M,
                         "__acpp_sscp_get_local_id_z");
   }
 
-  return llvm::PreservedAnalyses::none();
-
-}
-
-
-}
+  return PreservedAnalyses::none();
 }

@@ -13,23 +13,20 @@
 
 #include "llvm/IR/PassManager.h"
 
-namespace hipsycl {
-namespace compiler {
+namespace hipsycl::compiler {
 
 class KnownGroupSizeOptPass : public llvm::PassInfoMixin<KnownGroupSizeOptPass> {
 public:
-  KnownGroupSizeOptPass(int KnownGroupSizeX = -1, int KnownGroupSizeY = -1,
-                        int KnownGroupSizeZ = -1);
-  llvm::PreservedAnalyses run(llvm::Module &M,
-                              llvm::ModuleAnalysisManager &MAM);
+  explicit KnownGroupSizeOptPass(int KnownGroupSizeX = -1, int KnownGroupSizeY = -1,
+                                 int KnownGroupSizeZ = -1);
+  llvm::PreservedAnalyses run(llvm::Module &M, llvm::ModuleAnalysisManager &MAM);
+
 private:
   int KnownGroupSizeX;
   int KnownGroupSizeY;
   int KnownGroupSizeZ;
 };
 
-}
-}
+} // namespace hipsycl::compiler
 
 #endif
-
