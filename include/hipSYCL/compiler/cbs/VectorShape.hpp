@@ -12,13 +12,10 @@
 #ifndef INCLUDE_RV_VECTORSHAPE_H_
 #define INCLUDE_RV_VECTORSHAPE_H_
 
-#include <map>
-#include <stdint.h>
+#include "llvm/Support/raw_ostream.h"
+
 #include <string>
 #include <vector>
-
-#include <llvm/ADT/StringRef.h>
-#include <llvm/Support/raw_ostream.h>
 
 namespace llvm {
 class Constant;
