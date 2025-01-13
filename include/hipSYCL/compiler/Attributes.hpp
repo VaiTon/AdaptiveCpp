@@ -11,9 +11,9 @@
 #ifndef HIPSYCL_ATTRIBUTES_HPP
 #define HIPSYCL_ATTRIBUTES_HPP
 
-#include "clang/Sema/Sema.h"
-
 #include <string>
+
+#include "clang/AST/Attr.h"
 
 
 namespace hipsycl::compiler {
