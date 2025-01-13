@@ -13,7 +13,6 @@
 
 #include <llvm/IR/Type.h>
 #include <llvm/ADT/SmallVector.h>
-#include <vector>
 
 namespace hipsycl::compiler::utils {
 
