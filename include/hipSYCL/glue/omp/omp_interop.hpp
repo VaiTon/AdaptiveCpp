@@ -13,10 +13,11 @@
 
 #include "hipSYCL/sycl/backend.hpp"
 
-namespace hipsycl {
-namespace glue {
+namespace hipsycl::glue {
 
 #ifdef SYCL_EXT_HIPSYCL_BACKEND_OMPHOST
+
+/// backend_interop specialization for OpenMP host backend
 template <> struct backend_interop<sycl::backend::omp> {
   // Well, there's not a really a native error code type
   using error_type = int;
@@ -56,7 +57,6 @@ template <> struct backend_interop<sycl::backend::omp> {
 };
 #endif
 
-}
-}
+} // namespace hipsycl::glue
 
 #endif
