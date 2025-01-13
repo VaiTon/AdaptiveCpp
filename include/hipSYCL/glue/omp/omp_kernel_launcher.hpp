@@ -35,8 +35,7 @@
 #include <omp.h>
 #endif
 
-namespace hipsycl {
-namespace glue {
+namespace hipsycl::glue {
 namespace omp_dispatch {
 
 inline int get_my_thread_id() {
@@ -465,6 +464,6 @@ private:
 };
 
 }
-}
+
 
 #endif
