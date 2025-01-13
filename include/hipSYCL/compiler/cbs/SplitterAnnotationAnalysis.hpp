@@ -11,8 +11,8 @@
 #ifndef HIPSYCL_SPLITTERANNOTATIONANALYSIS_HPP
 #define HIPSYCL_SPLITTERANNOTATIONANALYSIS_HPP
 
-#include <llvm/IR/LegacyPassManagers.h>
-#include <llvm/IR/PassManager.h>
+#include "llvm/IR/LegacyPassManagers.h"
+#include "llvm/IR/PassManager.h"
 
 #include <optional>
 
