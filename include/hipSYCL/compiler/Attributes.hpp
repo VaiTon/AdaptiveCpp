@@ -15,55 +15,51 @@
 
 #include "clang/AST/Attr.h"
 
-
 namespace hipsycl::compiler {
 
-class AddonAttribute
-{
+class AddonAttribute {
+public:
+  explicit AddonAttribute(const std::string &name);
+
+  std::string getString() const;
+  bool describedBy(clang::Attr *attrib) const;
+  bool isAttachedTo(clang::FunctionDecl *F) const;
+
+private:
   std::string Name;
-public:
-  AddonAttribute(const std::string& name)
-  : Name(name)
-  {}
-
-  std::string getString() const
-  { return "__attribute__((diagnose_if(false,\""+ Name +",\"warning\")))"; }
-
-  bool describedBy(clang::Attr* attrib) const
-  {
-    if(clang::isa<clang::DiagnoseIfAttr>(attrib))
-    {
-      clang::DiagnoseIfAttr* attr = clang::cast<clang::DiagnoseIfAttr>(attrib);
-      if(attr->getMessage() == Name)
-        return true;
-    }
-    return false;
-  }
-
-  bool isAttachedTo(clang::FunctionDecl *F) const {
-    if (clang::Attr *A = F->getAttr<clang::DiagnoseIfAttr>())
-      return describedBy(A);
-    return false;
-  }
 };
 
-class KernelAttribute : public AddonAttribute
-{
+inline AddonAttribute::AddonAttribute(const std::string &name) : Name(name) {}
+
+inline std::string AddonAttribute::getString() const {
+  return "__attribute__((diagnose_if(false,\"" + Name + ",\"warning\")))";
+}
+inline bool AddonAttribute::describedBy(clang::Attr *attrib) const {
+  if (clang::isa<clang::DiagnoseIfAttr>(attrib)) {
+    clang::DiagnoseIfAttr *attr = clang::cast<clang::DiagnoseIfAttr>(attrib);
+    if (attr->getMessage() == Name)
+      return true;
+  }
+  return false;
+}
+inline bool AddonAttribute::isAttachedTo(clang::FunctionDecl *F) const {
+  if (clang::Attr *A = F->getAttr<clang::DiagnoseIfAttr>())
+    return describedBy(A);
+  return false;
+}
+
+class KernelAttribute : public AddonAttribute {
 public:
-  KernelAttribute()
-  : AddonAttribute{"hipsycl_kernel"}
-  {}
+  KernelAttribute() : AddonAttribute{"hipsycl_kernel"} {}
 };
 
-class CustomAttributes
-{
+class CustomAttributes {
 public:
   static const KernelAttribute SyclKernel;
 };
 
 const KernelAttribute CustomAttributes::SyclKernel = KernelAttribute{};
 
-}
-
+} // namespace hipsycl::compiler
 
 #endif
