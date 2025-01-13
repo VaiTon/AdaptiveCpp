@@ -19,31 +19,31 @@
 
 #include "hipSYCL/sycl/backend.hpp"
 
-namespace hipsycl {
-namespace glue {
+namespace hipsycl::glue {
 
-template <sycl::backend b> struct backend_interop {
-  // Specializations should define for interop with a sycl type T:
-  //
-  // using native_T_type = <native-backend-type>
-  // static native_T_type get_native_T(const T&)
-  // T make_T(const native_T_type&, <potentially additional args>)
-  //
-  // For interop_handle, the following is required:
-  // native_queue_type get_native_queue(rt::backend_kernel_launcher*)
-  // native_queue_type get_native_queue(rt::device_id, rt::backend_executor*)
-  // 
-  // In any case, the following should be defined:
-  // static constexpr bool can_make_T = <whether make_T exists>
-  // static constexpr bool can_extract_native_T = <whether get_native_T exists>
-};
+/// Specializations should define for interop with a sycl type T:
+/// \code
+/// using native_T_type = <native-backend-type>
+/// static native_T_type get_native_T(const T&)
+/// T make_T(const native_T_type&, <potentially additional args>)
+/// \endcode
+/// For interop_handle, the following is required:
+/// \code
+/// native_queue_type get_native_queue(rt::backend_kernel_launcher*)
+/// native_queue_type get_native_queue(rt::device_id, rt::backend_executor*)
+/// \endcode
+/// In any case, the following should be defined:
+/// \code
+/// static constexpr bool can_make_T = // whether make_T exists
+/// static constexpr bool can_extract_native_T = // whether get_native_T exists
+/// \endcode
+template <sycl::backend> struct backend_interop {};
 
-}
-} // namespace hipsycl
+} // namespace hipsycl::glue
 
 #include "cuda/cuda_interop.hpp"
 #include "hip/hip_interop.hpp"
-#include "ze/ze_interop.hpp"
 #include "omp/omp_interop.hpp"
+#include "ze/ze_interop.hpp"
 
 #endif
