@@ -4,7 +4,9 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// Adaptations: Remove notion of vector mapping & vector function
+// Adaptations:
+// - Remove notion of vector mapping & vector function
+// - Organize imports
 //
 //===----------------------------------------------------------------------===//
 //
@@ -12,23 +14,22 @@
 #ifndef INCLUDE_RV_VECTORIZATIONINFO_H_
 #define INCLUDE_RV_VECTORIZATIONINFO_H_
 
+#include "hipSYCL/compiler/cbs/Region.hpp"
+#include "hipSYCL/compiler/cbs/VectorShape.hpp"
+
+#include "llvm/Analysis/LoopInfo.h"
+#include "llvm/IR/ValueHandle.h"
+
+#include <map>
+#include <set>
+#include <unordered_map>
+
 namespace llvm {
 class LLVMContext;
 class BasicBlock;
 class Instruction;
 class Value;
 } // namespace llvm
-
-#include "Region.hpp"
-#include "VectorShape.hpp"
-
-#include "llvm/Analysis/LoopInfo.h"
-#include "llvm/IR/DataLayout.h"
-#include "llvm/IR/ValueHandle.h"
-#include "llvm/Support/raw_ostream.h"
-
-#include <set>
-#include <unordered_map>
 
 namespace hipsycl::compiler {
 
