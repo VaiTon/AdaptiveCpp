@@ -9,22 +9,21 @@
 // Small fix and cleanups.
 //
 //===----------------------------------------------------------------------===//
-
 #include "hipSYCL/compiler/cbs/UniformityAnalysis.hpp"
-#include "hipSYCL/compiler/cbs/VectorShapeTransformer.hpp"
-#include "hipSYCL/compiler/cbs/VectorizationInfo.hpp"
 
 #include "hipSYCL/common/debug.hpp"
 #include "hipSYCL/compiler/cbs/AllocaSSA.hpp"
 #include "hipSYCL/compiler/cbs/MathUtils.hpp"
-
-#include "llvm/Analysis/LoopInfo.h"
-#include "llvm/Analysis/PostDominators.h"
-#include "llvm/IR/Dominators.h"
+#include "hipSYCL/compiler/cbs/VectorShapeTransformer.hpp"
+#include "hipSYCL/compiler/cbs/VectorizationInfo.hpp"
 
 #include <fstream>
-
 #include <numeric>
+
+#include <llvm/Analysis/LoopInfo.h>
+#include <llvm/Analysis/PostDominators.h>
+#include <llvm/IR/Dominators.h>
+#include <llvm/IR/Module.h>
 
 #if 1
 #define IF_DEBUG_VA if (false)
