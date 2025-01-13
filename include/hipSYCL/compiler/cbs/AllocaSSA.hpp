@@ -11,13 +11,13 @@
 #ifndef RV_ANALYSIS_ALLOCASSA_H
 #define RV_ANALYSIS_ALLOCASSA_H
 
-#include <llvm/ADT/SmallPtrSet.h>
-#include <llvm/ADT/SmallVector.h>
-#include <llvm/IR/Instruction.h>
-#include <llvm/IR/Instructions.h>
-#include <llvm/Support/raw_ostream.h>
+#include "hipSYCL/compiler/cbs/VectorizationInfo.hpp"
 
-#include <hipSYCL/compiler/cbs/VectorizationInfo.hpp>
+#include "llvm/ADT/SmallPtrSet.h"
+#include "llvm/ADT/SmallVector.h"
+#include "llvm/IR/Instruction.h"
+#include "llvm/IR/Instructions.h"
+#include "llvm/Support/raw_ostream.h"
 
 #include <map>
 
