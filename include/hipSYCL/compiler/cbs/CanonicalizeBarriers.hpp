@@ -14,8 +14,7 @@
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Pass.h"
 
-namespace hipsycl {
-namespace compiler {
+namespace hipsycl::compiler {
 
 class CanonicalizeBarriersPassLegacy : public llvm::FunctionPass {
 public:
@@ -37,7 +36,7 @@ public:
   llvm::PreservedAnalyses run(llvm::Function &F, llvm::FunctionAnalysisManager &AM);
   static bool isRequired() { return true; }
 };
-} // namespace compiler
-} // namespace hipsycl
+
+} // namespace hipsycl::compiler
 
 #endif // HIPSYCL_CANONICALIZEBARRIERS_HPP
