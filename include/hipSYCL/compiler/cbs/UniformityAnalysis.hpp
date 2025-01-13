@@ -4,34 +4,25 @@
 // See https://llvm.org/LICENSE.txt for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// Adaptations: Use local or LLVM SDA depending on the LLVM version
-// Remove dependency on VectorMapping and having a dedicated FunctionAnalysisManager
+// Adaptations:
+// - Use local or LLVM SDA depending on the LLVM version
+// - Remove dependency on VectorMapping and having a dedicated FunctionAnalysisManager
+// - Remove unnecessary includes
 //
 //===----------------------------------------------------------------------===//
 
 #ifndef RV_VECTORIZATIONANALYSIS_H_
 #define RV_VECTORIZATIONANALYSIS_H_
 
-#include "AllocaSSA.hpp"
-#include "VectorShape.hpp"
-#include "VectorShapeTransformer.hpp"
-#include "VectorizationInfo.hpp"
+#include "hipSYCL/compiler/cbs/AllocaSSA.hpp"
+#include "hipSYCL/compiler/cbs/VectorShape.hpp"
+#include "hipSYCL/compiler/cbs/VectorShapeTransformer.hpp"
+#include "hipSYCL/compiler/cbs/VectorizationInfo.hpp"
 
-#include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/DenseSet.h"
-#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/IR/BasicBlock.h"
-#include "llvm/IR/Dominators.h"
-#include "llvm/IR/Function.h"
-#include "llvm/IR/InstVisitor.h"
-#include "llvm/IR/Instructions.h"
-#include "llvm/IR/Operator.h"
-#include "llvm/IR/Use.h"
 #include "llvm/IR/Value.h"
-#include "llvm/IR/ValueHandle.h"
-#include "llvm/Pass.h"
 #include "llvm/Support/GenericDomTree.h"
-#include "llvm/Support/raw_ostream.h"
 
 // Todo: for LLVM >= 17, we probably want to use the llvm::UniformityAnalysis at some point..
 #if LLVM_VERSION_MAJOR >= 17
@@ -40,9 +31,7 @@
 #include "llvm/Analysis/SyncDependenceAnalysis.h"
 #endif
 
-#include <map>
 #include <queue>
-#include <string>
 #include <unordered_set>
 
 namespace llvm {
