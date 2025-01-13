@@ -11,38 +11,33 @@
 #ifndef HIPSYCL_FRONTEND_HPP
 #define HIPSYCL_FRONTEND_HPP
 
+#include "hipSYCL/common/debug.hpp"
+#include "hipSYCL/compiler/Attributes.hpp"
+#include "hipSYCL/compiler/CompilationState.hpp"
+
+#include "clang/AST/AST.h"
+#include "clang/AST/ASTConsumer.h"
+#include "clang/AST/ASTContext.h"
+#include "clang/AST/Attr.h"
+#include "clang/AST/Decl.h"
+#include "clang/AST/DeclCXX.h"
+#include "clang/AST/DeclGroup.h"
+#include "clang/AST/Mangle.h"
+#include "clang/AST/RecursiveASTVisitor.h"
+#include "clang/Basic/Specifiers.h"
+#include "clang/Basic/TargetInfo.h"
+#include "clang/Frontend/CompilerInstance.h"
+#include "clang/Frontend/FrontendPluginRegistry.h"
+#include "clang/Frontend/MultiplexConsumer.h"
+#include "clang/Lex/PreprocessorOptions.h"
+#include "clang/Sema/Sema.h"
+
 #include <algorithm>
-#include <unordered_set>
-#include <unordered_map>
 #include <cassert>
 #include <regex>
 #include <sstream>
-
-#include "clang/AST/ASTContext.h"
-#include "clang/AST/Decl.h"
-#include "clang/AST/DeclCXX.h"
-#include "clang/Basic/LLVM.h"
-#include "clang/Basic/Specifiers.h"
-#include "clang/Basic/TargetInfo.h"
-#include "clang/Frontend/FrontendPluginRegistry.h"
-#include "clang/AST/AST.h"
-#include "clang/AST/Attr.h"
-#include "clang/AST/Mangle.h"
-#include "clang/AST/ASTConsumer.h"
-#include "clang/AST/RecursiveASTVisitor.h"
-#include "clang/AST/Mangle.h"
-#include "clang/AST/ASTMutationListener.h"
-#include "clang/AST/DeclGroup.h"
-#include "clang/Frontend/CompilerInstance.h"
-#include "clang/Frontend/MultiplexConsumer.h"
-#include "clang/Sema/Sema.h"
-#include "clang/Lex/PreprocessorOptions.h"
-
-#include "CompilationState.hpp"
-#include "Attributes.hpp"
-
-#include "hipSYCL/common/debug.hpp"
-
+#include <unordered_map>
+#include <unordered_set>
 
 namespace hipsycl {
 namespace compiler {
