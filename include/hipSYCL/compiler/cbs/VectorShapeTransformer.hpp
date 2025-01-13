@@ -12,13 +12,13 @@
 #ifndef RV_SHAPE_VECTORSHAPETRANSFORMER_H
 #define RV_SHAPE_VECTORSHAPETRANSFORMER_H
 
-#include "VectorShape.hpp"
+#include "hipSYCL/compiler/cbs/VectorShape.hpp"
 
-#include <llvm/ADT/SmallVector.h>
-#include <llvm/Analysis/LoopInfo.h>
-#include <llvm/IR/Instructions.h>
-#include <llvm/IR/Value.h>
-#include <llvm/IR/DataLayout.h>
+#include "llvm/ADT/SmallVector.h"
+#include "llvm/Analysis/LoopInfo.h"
+#include "llvm/IR/DataLayout.h"
+#include "llvm/IR/Instructions.h"
+#include "llvm/IR/Value.h"
 
 namespace hipsycl::compiler {
 using SmallValVec = llvm::SmallVector<const llvm::Value *, 2>;
