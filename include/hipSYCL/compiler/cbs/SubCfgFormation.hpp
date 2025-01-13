@@ -12,7 +12,6 @@
 #define HIPSYCL_SUBCFGFORMATION_HPP
 
 #include "llvm/Analysis/LoopInfo.h"
-#include "llvm/IR/Function.h"
 #include "llvm/Pass.h"
 
 namespace hipsycl {
