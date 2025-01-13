@@ -11,8 +11,8 @@
 #ifndef HIPSYCL_KERNELFLATTENING_HPP
 #define HIPSYCL_KERNELFLATTENING_HPP
 
-#include <llvm/IR/PassManager.h>
-#include <llvm/Pass.h>
+#include "llvm/IR/PassManager.h"
+#include "llvm/Pass.h"
 
 namespace hipsycl {
 namespace compiler {
