@@ -11,7 +11,7 @@
 #ifndef HIPSYCL_PIPELINEBUILDER_HPP
 #define HIPSYCL_PIPELINEBUILDER_HPP
 
-#include <llvm/Passes/PassBuilder.h>
+#include "llvm/Passes/PassBuilder.h"
 
 namespace llvm {
 namespace legacy {
