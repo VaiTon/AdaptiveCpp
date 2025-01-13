@@ -11,8 +11,7 @@
 #ifndef HIPSYCL_LLVM_TO_SPIRV_HPP
 #define HIPSYCL_LLVM_TO_SPIRV_HPP
 
-
-#include "../LLVMToBackend.hpp"
+#include "hipSYCL/compiler/llvm-to-backend/LLVMToBackend.hpp"
 
 #include <vector>
 #include <string>

@@ -11,10 +11,11 @@
 #ifndef HIPSYCL_LLVM_TO_SPIRV_FACTORY_HPP
 #define HIPSYCL_LLVM_TO_SPIRV_FACTORY_HPP
 
+#include "hipSYCL/compiler/llvm-to-backend/LLVMToBackend.hpp"
+
 #include <memory>
-#include <vector>
 #include <string>
-#include "../LLVMToBackend.hpp"
+#include <vector>
 
 namespace hipsycl {
 namespace compiler {
