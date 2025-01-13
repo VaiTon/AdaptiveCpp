@@ -22,12 +22,11 @@
 
 #if LLVM_VERSION_MAJOR >= 17
 
-#include "llvm/ADT/DenseMap.h"
-#include "llvm/ADT/PostOrderIterator.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/Analysis/LoopInfo.h"
-#include <memory>
+
 #include <map>
+#include <memory>
 
 namespace llvm {
 
