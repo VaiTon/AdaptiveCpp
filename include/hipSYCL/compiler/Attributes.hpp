@@ -15,8 +15,8 @@
 
 #include <string>
 
-namespace hipsycl {
-namespace compiler {
+
+namespace hipsycl::compiler {
 
 class AddonAttribute
 {
@@ -64,6 +64,6 @@ public:
 const KernelAttribute CustomAttributes::SyclKernel = KernelAttribute{};
 
 }
-}
+
 
 #endif
