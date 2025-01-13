@@ -11,7 +11,6 @@
 #ifndef HIPSYCL_LOOPSIMPLIFY_HPP
 #define HIPSYCL_LOOPSIMPLIFY_HPP
 
-#include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/LoopPass.h"
 #include "llvm/Transforms/Scalar/LoopPassManager.h"
 
