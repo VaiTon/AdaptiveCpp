@@ -52,7 +52,7 @@ jobs:
       shell: powershell
       run: |
         $env:PATH = "$env:GITHUB_WORKSPACE\llvm\bin;$env:PATH"
-        $boostURL = "https://boostorg.jfrog.io/artifactory/main/release/1.81.0/source/boost_1_81_0.7z"
+        $boostURL = "https://archives.boost.io/release/1.81.0/source/boost_1_81_0.7z"
         $boostFolderName = $boostUrl.Split("/")[-1].Split(".")[0]
         Invoke-WebRequest $boostURL -OutFile boost.7z
         7z.exe x boost.7z
