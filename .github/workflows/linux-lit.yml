@@ -1,6 +1,6 @@
 name: Linux LIT tests
 
-on: [push, pull_request]
+on: [ push, pull_request ]
 
 jobs:
   cbs:
@@ -8,8 +8,8 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        clang: [14, 15, 16, 17, 18]
-        os: [ubuntu-22.04]
+        clang: [ 14, 15, 16, 17, 18 ]
+        os: [ ubuntu-22.04 ]
     steps:
       - uses: actions/checkout@v4
         with:
@@ -27,9 +27,8 @@ jobs:
             sudo rm -r /usr/lib/clang/16*
             sudo ln -s /usr/lib/llvm-16/lib/clang/16 /usr/lib/clang/16
           fi
-      - name: install boost (from apt)
-        run: |
-          sudo apt-get install -y libboost-all-dev
+      - name: install Boost and CMake (from apt)
+        run: sudo apt-get install -y libboost-all-dev cmake
       - name: setup build env
         run: |
           export CXXFLAGS="$CXXFLAGS"
@@ -71,8 +70,8 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        clang: [14, 15, 16, 17, 18]
-        os: [ubuntu-22.04]
+        clang: [ 14, 15, 16, 17, 18 ]
+        os: [ ubuntu-22.04 ]
     steps:
       - uses: actions/checkout@v4
         with:
