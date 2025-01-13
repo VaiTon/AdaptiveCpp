@@ -15,10 +15,7 @@
 #include <llvm/ADT/SmallVector.h>
 #include <vector>
 
-namespace hipsycl {
-namespace compiler {
-namespace utils {
-
+namespace hipsycl::compiler::utils {
 
 template <class F, class H>
 void ForEachNonAggregateContainedTypeWithParentTypeMatcher(llvm::Type *T, F &&Handler,
@@ -63,8 +60,6 @@ void ForEachNonAggregateContainedType(llvm::Type *T, F &&Handler,
                                                         [](auto *Type) { return false; });
 }
 
-}
-}
-}
+} // namespace hipsycl::compiler::utils
 
 #endif
