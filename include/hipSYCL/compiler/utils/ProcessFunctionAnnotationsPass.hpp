@@ -21,9 +21,7 @@
 
 #include <vector>
 
-namespace hipsycl {
-namespace compiler {
-namespace utils {
+namespace hipsycl::compiler::utils {
 
 class ProcessFunctionAnnotationPass : public llvm::PassInfoMixin<ProcessFunctionAnnotationPass> {
 public:
@@ -78,8 +76,6 @@ private:
   std::unordered_map<std::string, llvm::SmallPtrSet<llvm::Function*, 16>> FoundAnnotations;
 };
 
-}
-}
-}
+} // namespace hipsycl::compiler::utils
 
 #endif
