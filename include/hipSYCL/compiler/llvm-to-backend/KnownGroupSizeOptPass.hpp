@@ -11,8 +11,7 @@
 #ifndef HIPSYCL_SSCP_KNOWN_GROUP_SIZE_OPT_HPP
 #define HIPSYCL_SSCP_KNOWN_GROUP_SIZE_OPT_HPP
 
-#include <llvm/IR/PassManager.h>
-
+#include "llvm/IR/PassManager.h"
 
 namespace hipsycl {
 namespace compiler {

@@ -11,10 +11,11 @@
 #ifndef ACPP_S2_REFLECTION_HPP
 #define ACPP_S2_REFLECTION_HPP
 
-#include <llvm/IR/PassManager.h>
-#include <unordered_map>
-#include <string>
+#include "llvm/IR/PassManager.h"
+
 #include <cstdint>
+#include <string>
+#include <unordered_map>
 
 namespace hipsycl {
 namespace compiler {

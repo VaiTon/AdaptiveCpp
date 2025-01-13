@@ -11,13 +11,14 @@
 #ifndef HIPSYCL_LLVM_TO_BACKEND_TOOL_HPP
 #define HIPSYCL_LLVM_TO_BACKEND_TOOL_HPP
 
+#include "hipSYCL/common/hcf_container.hpp"
+#include "hipSYCL/compiler/llvm-to-backend/LLVMToBackend.hpp"
+
+#include <fstream>
+#include <functional>
 #include <ios>
 #include <iostream>
 #include <memory>
-#include <fstream>
-#include <functional>
-#include "LLVMToBackend.hpp"
-#include "hipSYCL/common/hcf_container.hpp"
 
 namespace hipsycl {
 namespace compiler {

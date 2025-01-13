@@ -11,11 +11,10 @@
 #ifndef HIPSYCL_DEAD_ARGUMENT_ELIMINATION_PASS_HPP
 #define HIPSYCL_DEAD_ARGUMENT_ELIMINATION_PASS_HPP
 
-#include <unordered_map>
-#include <functional>
-#include <llvm/IR/Function.h>
-#include <llvm/IR/PassManager.h>
+#include "llvm/IR/Function.h"
+#include "llvm/IR/PassManager.h"
 
+#include <functional>
 
 namespace hipsycl {
 namespace compiler {

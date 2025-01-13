@@ -11,29 +11,26 @@
 #ifndef HIPSYCL_LLVM_TO_BACKEND_UTILS_HPP
 #define HIPSYCL_LLVM_TO_BACKEND_UTILS_HPP
 
-#include <atomic>
-
 #include "hipSYCL/compiler/llvm-to-backend/LLVMToBackend.hpp"
-#include "hipSYCL/common/debug.hpp"
-#include <llvm/ADT/DenseMap.h>
-#include <llvm/IR/Attributes.h>
-#include <llvm/ADT/SmallSet.h>
-#include <llvm/IR/Function.h>
-#include <llvm/Support/Casting.h>
-#include <llvm/IR/Type.h>
-#include <llvm/IR/Instructions.h>
-#include <llvm/IR/DerivedTypes.h>
-#include <llvm/IR/User.h>
-#include <llvm/IR/Argument.h>
-#include <llvm/IR/LLVMContext.h>
-#include <llvm/IR/Module.h>
-#include <llvm/Bitcode/BitcodeReader.h>
-#include <llvm/Bitcode/BitcodeWriter.h>
-#include <llvm/IR/PassManager.h>
-#include <llvm/Support/Error.h>
-#include <llvm/Support/MemoryBuffer.h>
-#include <llvm/Support/raw_ostream.h>
-#include <llvm/Passes/PassBuilder.h>
+
+#include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/SmallSet.h"
+#include "llvm/Bitcode/BitcodeReader.h"
+#include "llvm/Bitcode/BitcodeWriter.h"
+#include "llvm/IR/Argument.h"
+#include "llvm/IR/Attributes.h"
+#include "llvm/IR/DerivedTypes.h"
+#include "llvm/IR/Function.h"
+#include "llvm/IR/Instructions.h"
+#include "llvm/IR/Module.h"
+#include "llvm/IR/PassManager.h"
+#include "llvm/IR/Type.h"
+#include "llvm/Passes/PassBuilder.h"
+#include "llvm/Support/Casting.h"
+#include "llvm/Support/Error.h"
+#include "llvm/Support/MemoryBuffer.h"
+
+#include <atomic>
 
 namespace hipsycl {
 namespace compiler {
@@ -179,7 +176,7 @@ public:
 #endif
         }
         Params.push_back(NewT);
-      
+
       } else {
         Params.push_back(CurrentParamType);
       }
@@ -204,7 +201,7 @@ public:
             assert(ValT);
 
             NewF->removeParamAttr(i, PresentAttr);
-            addByValueArgAttribute(M, *NewF, i, ValT);          
+            addByValueArgAttribute(M, *NewF, i, ValT);
           }
         // Otherwise we might be dealing with a pointer that needs to be wrapped in
         // a by-value struct
@@ -238,8 +235,8 @@ public:
             llvm::SmallVector<llvm::Value*> GEPIndices{Zero, Zero};
             auto *GEPInst = llvm::GetElementPtrInst::CreateInBounds(
               WrapperType, NewF->getArg(i), llvm::ArrayRef<llvm::Value *>{GEPIndices}, "", BB);
-            
-            
+
+
             auto* WrappedTy = GEPInst->getResultElementType();
             auto* LoadInst = new llvm::LoadInst{WrappedTy, GEPInst, "", BB};
 
@@ -250,7 +247,7 @@ public:
             } else {
               CallArg = LoadInst;
             }
-            
+
           } else {
             // We are dealing with a USM pointer
             if (NewPT->getAddressSpace() != OldPT->getAddressSpace()) {
@@ -260,11 +257,11 @@ public:
             // The else branch is unnecessary, because by default we just
             // pass in the original function argument.
           }
-        } 
-        
+        }
+
         CallArgs.push_back(CallArg);
       }
-  
+
       assert(CallArgs.size() == F->getFunctionType()->getNumParams());
       for(int i = 0; i < CallArgs.size(); ++i) {
         assert(CallArgs[i]->getType() == F->getFunctionType()->getParamType(i));
@@ -321,14 +318,14 @@ private:
 #else
         llvm::PointerType::get(OriginalPointerType->getContext(), PointerAddressSpace);
 #endif
-    
+
     auto it = PointerWrapperTypes.find(WrappedType);
     if(it != PointerWrapperTypes.end())
       return it->second;
-    
+
     std::string Name = "__acpp_sscp_pointer_wrapper." + std::to_string(++WrapperCounter);
     llvm::SmallVector<llvm::Type*> Elements {WrappedType};
-    
+
     llvm::Type* NewType = llvm::StructType::create(M.getContext(), Elements, Name);
 
     PointerWrapperTypes[WrappedType] = NewType;

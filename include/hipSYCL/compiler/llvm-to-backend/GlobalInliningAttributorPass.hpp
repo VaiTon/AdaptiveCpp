@@ -11,9 +11,10 @@
 #ifndef HIPSYCL_SSCP_GLOBAL_INLINING_ATTRIBUTOR_PASS_HPP
 #define HIPSYCL_SSCP_GLOBAL_INLINING_ATTRIBUTOR_PASS_HPP
 
-#include <llvm/IR/PassManager.h>
-#include <vector>
+#include "llvm/IR/PassManager.h"
+
 #include <string>
+#include <vector>
 
 namespace hipsycl {
 namespace compiler {

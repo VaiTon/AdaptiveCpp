@@ -11,9 +11,10 @@
 #ifndef HIPSYCL_SSCP_ADDRESS_SPACE_INFERENCE_PASS_HPP
 #define HIPSYCL_SSCP_ADDRESS_SPACE_INFERENCE_PASS_HPP
 
-#include <llvm/IR/PassManager.h>
-#include "Utils.hpp"
-#include "AddressSpaceMap.hpp"
+#include "hipSYCL/compiler/llvm-to-backend/AddressSpaceMap.hpp"
+#include "hipSYCL/compiler/llvm-to-backend/Utils.hpp"
+
+#include "llvm/IR/PassManager.h"
 
 namespace hipsycl {
 namespace compiler {

@@ -11,7 +11,8 @@
 #ifndef HIPSYCL_SSCP_KNOWN_PTR_PARAM_ALIGNMENT_OPT_PASS_HPP
 #define HIPSYCL_SSCP_KNOWN_PTR_PARAM_ALIGNMENT_OPT_PASS_HPP
 
-#include <llvm/IR/PassManager.h>
+#include "llvm/IR/PassManager.h"
+
 #include <unordered_map>
 
 namespace hipsycl {
