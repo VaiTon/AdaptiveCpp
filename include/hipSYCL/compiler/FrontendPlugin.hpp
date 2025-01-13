@@ -11,11 +11,9 @@
 #ifndef HIPSYCL_FRONTEND_PLUGIN_HPP
 #define HIPSYCL_FRONTEND_PLUGIN_HPP
 
-#include "Frontend.hpp"
+#include "hipSYCL/compiler/Frontend.hpp"
 
-#include "clang/AST/AST.h"
 #include "clang/Frontend/FrontendPluginRegistry.h"
-#include "clang/Lex/Preprocessor.h"
 #include "clang/Lex/PreprocessorOptions.h"
 
 namespace hipsycl {
