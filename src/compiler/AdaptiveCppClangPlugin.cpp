@@ -44,6 +44,7 @@
 #include "llvm/Support/CommandLine.h"
 
 #if LLVM_VERSION_MAJOR < 16
+#include "llvm/IR/LegacyPassManager.h"
 #include "llvm/Transforms/IPO/PassManagerBuilder.h"
 #include "llvm/IR/LegacyPassManager.h"
 #endif
