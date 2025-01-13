@@ -15,10 +15,55 @@
 #include <llvm/IR/Function.h>
 
 using namespace llvm;
+using namespace hipsycl::compiler;
 
-namespace hipsycl::compiler {
+void RegionImpl::forEachBlock(const BlockPredicate &UserFunc) const {
+  auto *Function = getRegionEntry().getParent();
+  for (const auto &BB : *Function) {
+    if (!contains(&BB)) {
+      continue;
+    }
+
+    bool carryOn = UserFunc(BB);
+    if (!carryOn) {
+      break;
+    }
+  }
+}
+
+void RegionImpl::getEndingBlocks(SmallPtrSet<BasicBlock *, 2> &endingBlocks) const {
+  assert(endingBlocks.empty());
+
+  std::stack<BasicBlock *> blockStack;
+  blockStack.push(&this->getRegionEntry());
+
+  std::set<BasicBlock *> visitedBlocks;
+
+  while (!blockStack.empty()) {
+    // Pop the next block
+    BasicBlock *block = blockStack.top();
+    blockStack.pop();
+
+    // Make sure we haven't seen it already
+    if (visitedBlocks.count(block))
+      continue;
+    visitedBlocks.insert(block);
+
+    // If a successor is outside the region, the region ends here.
+    // Successors inside the region need to be processed recursively
+    for (BasicBlock *successor : successors(block)) {
+      if (this->contains(successor)) {
+        blockStack.push(successor);
+      } else {
+        endingBlocks.insert(successor);
+      }
+    }
+  }
+}
 
 Region::Region(RegionImpl &Impl) : mImpl(Impl) {}
+std::string Region::str() const { return mImpl.str(); }
+void Region::add(const BasicBlock &extra) { extraBlocks.insert(&extra); }
 
 bool Region::contains(const BasicBlock *BB) const {
   if (extraBlocks.count(BB))
@@ -27,25 +72,24 @@ bool Region::contains(const BasicBlock *BB) const {
     return mImpl.contains(BB);
 }
 
-BasicBlock &Region::getRegionEntry() const { return mImpl.getRegionEntry(); }
-
-std::string Region::str() const { return mImpl.str(); }
-
-void Region::getEndingBlocks(llvm::SmallPtrSet<BasicBlock *, 2> &endingBlocks) const {
+void Region::getEndingBlocks(SmallPtrSet<BasicBlock *, 2> &endingBlocks) const {
   mImpl.getEndingBlocks(endingBlocks);
 }
+BasicBlock &Region::getRegionEntry() const { return mImpl.getRegionEntry(); }
+Function &Region::getFunction() { return *getRegionEntry().getParent(); }
+const Function &Region::getFunction() const { return *getRegionEntry().getParent(); }
 
 bool Region::isVectorLoop() const { return mImpl.isVectorLoop(); }
 
-void Region::for_blocks(std::function<bool(const BasicBlock &block)> userFunc) const {
-  mImpl.for_blocks(userFunc);
+void Region::forEachBlock(const BlockPredicate &userFunc) const {
+  mImpl.forEachBlock(userFunc);
   for (auto *block : extraBlocks)
     userFunc(*block);
 }
 
-void Region::for_blocks_rpo(std::function<bool(const BasicBlock &block)> userFunc) const {
+void Region::forBlocksRpo(const BlockPredicate &userFunc) const {
   const Function &F = *getRegionEntry().getParent();
-  ReversePostOrderTraversal<const Function *> RPOT(&F);
+  ReversePostOrderTraversal RPOT{&F};
 
   for (auto *BB : RPOT) {
     if (mImpl.contains(BB) || extraBlocks.count(BB))
@@ -61,11 +105,11 @@ bool LoopRegion::contains(const BasicBlock *BB) const { return loop.contains(BB)
 
 BasicBlock &LoopRegion::getRegionEntry() const { return *loop.getHeader(); }
 
-void LoopRegion::getEndingBlocks(llvm::SmallPtrSet<BasicBlock *, 2> &endingBlocks) const {
+void LoopRegion::getEndingBlocks(SmallPtrSet<BasicBlock *, 2> &endingBlocks) const {
   SmallVector<BasicBlock *, 2> endingBlocksVector;
   loop.getExitBlocks(endingBlocksVector);
 
-  for (auto &endingBB : endingBlocksVector) {
+  for (const auto &endingBB : endingBlocksVector) {
     endingBlocks.insert(endingBB);
   }
 }
@@ -75,13 +119,18 @@ std::string LoopRegion::str() const {
   return ("LoopRegion (header " + loopHeaderName + ")").str();
 }
 
-void FunctionRegion::getEndingBlocks(llvm::SmallPtrSet<BasicBlock *, 2> &endingBlocks) const {
-  for (auto *BB : BBs) {
+FunctionRegion::FunctionRegion(Function &F, const ArrayRef<BasicBlock *> Blocks)
+    : F{F}, Blocks{Blocks.begin(), Blocks.end()} {}
+
+FunctionRegion::~FunctionRegion() {}
+bool FunctionRegion::contains(const BasicBlock *BB) const { return Blocks.contains(BB); }
+BasicBlock &FunctionRegion::getRegionEntry() const { return F.getEntryBlock(); }
+void FunctionRegion::getEndingBlocks(SmallPtrSet<BasicBlock *, 2> &endingBlocks) const {
+  for (auto *BB : Blocks) {
     if (BB->getTerminator()->getNumSuccessors() == 0)
       endingBlocks.insert(BB);
   }
 }
 
 std::string FunctionRegion::str() const { return ("FunctionRegion (" + F.getName() + ")").str(); }
-
-} // namespace hipsycl::compiler
+bool FunctionRegion::isVectorLoop() const { return false; }

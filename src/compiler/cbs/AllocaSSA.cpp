@@ -10,9 +10,10 @@
 
 #include "hipSYCL/compiler/cbs/AllocaSSA.hpp"
 
-#include <llvm/IR/Instructions.h>
-#include <llvm/IR/IntrinsicInst.h>
-#include <llvm/Support/raw_ostream.h>
+#include "llvm/IR/Instructions.h"
+#include "llvm/IR/IntrinsicInst.h"
+#include "llvm/Support/raw_ostream.h"
+
 #include <vector>
 
 using namespace llvm;
@@ -25,16 +26,57 @@ using namespace llvm;
 
 namespace hipsycl::compiler {
 
+PtrProvenance::PtrProvenance() : provType(ProvType::Tracked) {}
+PtrProvenance::PtrProvenance(const ProvType Type) : provType(Type) {}
+PtrProvenance::PtrProvenance(const AllocaInst *Inst) : provType(ProvType::Tracked) {
+  allocs.insert(Inst);
+}
+
+// provenance lattice join
+bool PtrProvenance::merge(const PtrProvenance &Other) {
+  bool changed = provType != Other.provType;
+
+  provType = std::max<ProvType>(provType, Other.provType);
+  if (provType == ProvType::Wildcard) {
+    allocs.clear(); // explicit tracking no longed necessary
+  } else {
+    for (const auto *alloc : Other.allocs) {
+      changed |= allocs.insert(alloc).second;
+    }
+  }
+
+  return changed;
+}
+
+bool PtrProvenance::isBottom() const { return provType == ProvType::Tracked && allocs.empty(); }
+bool PtrProvenance::isTop() const { return provType == ProvType::Wildcard; }
+
+raw_ostream &PtrProvenance::print(raw_ostream &out) const {
+  if (provType == ProvType::Wildcard) {
+    out << "*";
+    return out;
+  }
+
+  out << allocs;
+
+  if (provType == ProvType::External) {
+    out << "+";
+  }
+  return out;
+}
+
+raw_ostream &operator<<(raw_ostream &out, const PtrProvenance &prov) { return prov.print(out); }
+
 // static
 PtrProvenance AllocaSSA::emptyProvSingle;
 PtrProvenance AllocaSSA::externalProvSingle(ProvType::External);
 
 const Value *GetAccessedPointer(const Instruction &I) {
-  const auto *storeInst = dyn_cast<StoreInst>(&I);
-  if (storeInst)
+  if (const auto *storeInst = dyn_cast<StoreInst>(&I)) {
     return storeInst->getPointerOperand();
-  else
-    return cast<LoadInst>(I).getPointerOperand();
+  }
+
+  return cast<LoadInst>(I).getPointerOperand();
 }
 
 void AllocaSSA::computeLiveness() {
@@ -42,8 +84,9 @@ void AllocaSSA::computeLiveness() {
   region.getEndingBlocks(endingBlocks);
 
   std::vector<BasicBlock *> stack;
-  for (auto *BB : endingBlocks)
+  for (auto *BB : endingBlocks) {
     stack.push_back(BB);
+  }
 
   std::set<const BasicBlock *> alreadyVisited;
 
@@ -65,7 +108,7 @@ void AllocaSSA::computeLiveness() {
           continue;
         PtrProvenance ptrProv = getProvenance(cast<Instruction>(*ptr));
         for (auto *liveAlloc : ptrProv.allocs) { // TODO support for wildcard..
-          IF_DEBUG_LN errs() << "Live " << liveAlloc->getName() << "\n";
+          IF_DEBUG_LN errs() << "Live " << liveAlloc -> getName() << "\n";
           changed |= summary.liveAllocas.insert(liveAlloc).second;
         }
       }
@@ -90,6 +133,31 @@ void AllocaSSA::computeLiveness() {
   }
 }
 
+bool AllocaSSA::isLive(const AllocaInst &alloca, const BasicBlock &BB) const {
+  const auto *summary = getBlockSummary(BB);
+  if (!summary)
+    return false;
+  return summary->liveAllocas.count(&alloca);
+}
+
+const AllocaSSA::BlockSummary *AllocaSSA::getBlockSummary(const BasicBlock &BB) const {
+  auto it = blockSummaries.find(&BB);
+  if (it != blockSummaries.end()) {
+    return it->second;
+  }
+  return nullptr;
+}
+
+AllocaSSA::BlockSummary &AllocaSSA::requestBlockSummary(const BasicBlock &BB) {
+  if (const auto it = blockSummaries.find(&BB); it != blockSummaries.end()) {
+    return *it->second; // found in cache
+  }
+
+  auto *const summary = new BlockSummary(BB);
+  blockSummaries[&BB] = summary;
+  return *summary;
+}
+
 void AllocaSSA::computePointerProvenance() {
   std::vector<const BasicBlock *> worklist;
   worklist.push_back(&region.getRegionEntry());
@@ -109,34 +177,34 @@ void AllocaSSA::computePointerProvenance() {
       if (!inst.getType()->isPointerTy())
         continue;
       if (allocInst) {
-        if (provMap.count(&inst))
+        if (instProvenance.count(&inst))
           continue;
-        provMap[allocInst] = PtrProvenance(allocInst);
+        instProvenance[allocInst] = PtrProvenance(allocInst);
         changed = true;
 
       } else if (isa<LoadInst>(inst) || isa<CallInst>(inst)) {
         // wildcard sources
-        if (provMap.count(&inst))
+        if (instProvenance.count(&inst))
           continue;
-        provMap[&inst] = PtrProvenance(ProvType::Wildcard); // FIXME refine as necessary
+        instProvenance[&inst] = PtrProvenance(ProvType::Wildcard); // FIXME refine as necessary
         changed = true;
 
       } else {
         // generic transformer -> join all operand provenances
         bool instChanged = false;
-        PtrProvenance oldProv = provMap[&inst];
+        PtrProvenance oldProv = instProvenance[&inst];
         for (int i = 0; i < (int)inst.getNumOperands(); ++i) {
           const auto *opInst = dyn_cast<Instruction>(inst.getOperand(i));
           if (!opInst)
             continue;
-          if (!provMap.count(opInst))
+          if (!instProvenance.count(opInst))
             continue;
-          const auto &opProv = provMap[opInst];
+          const auto &opProv = instProvenance[opInst];
           instChanged |= oldProv.merge(opProv);
         }
 
         if (instChanged) {
-          provMap[&inst] = oldProv;
+          instProvenance[&inst] = oldProv;
           changed = true;
         }
       }
@@ -150,12 +218,12 @@ void AllocaSSA::computePointerProvenance() {
     for (int i = 0; i < (int)term.getNumSuccessors(); ++i) {
       worklist.push_back(term.getSuccessor(i));
     }
-  };
+  }
 }
 
-llvm::raw_ostream &AllocaSSA::print(raw_ostream &out) const {
+raw_ostream &AllocaSSA::print(raw_ostream &out) const {
   out << "Pointer Provenance {\n";
-  region.for_blocks_rpo([this, &out](const BasicBlock &BB) {
+  region.forBlocksRpo([&out, this](const BasicBlock &BB) {
     bool blockPrinted = false;
 
     // does this block have a join?
@@ -167,8 +235,7 @@ llvm::raw_ostream &AllocaSSA::print(raw_ostream &out) const {
         summary->getJoinSet().print(out) << "\n";
       }
       if (!summary->liveAllocas.empty()) {
-        out << "\t live ";
-        Print(summary->liveAllocas, out) << "\n";
+        out << "\t live " << summary->liveAllocas << "\n";
       }
       blockPrinted = true;
     }
@@ -191,6 +258,17 @@ llvm::raw_ostream &AllocaSSA::print(raw_ostream &out) const {
   });
   out << "}\n";
   return out;
+}
+
+raw_ostream &operator<<(raw_ostream &out, const AllocaSSA &allocaSSA) {
+  return allocaSSA.print(out);
+}
+
+const Join *AllocaSSA::getJoinNode(const BasicBlock &BB) const {
+  const auto *summary = getBlockSummary(BB);
+  if (!summary)
+    return nullptr;
+  return &summary->allocJoin;
 }
 
 using IntSet = std::set<int>;
@@ -244,7 +322,7 @@ static bool GetWrittenPointers(const Instruction &inst,
     IntSet unwrittenArgIndices = GetUnwrittenArguments(*callInst);
 
     int i = 0;
-    for (const llvm::Value *callArg : callInst->args()) {
+    for (const Value *callArg : callInst->args()) {
       // can only write to pointers (well...)
       if (!callArg->getType()->isPointerTy())
         continue;
@@ -262,6 +340,10 @@ static bool GetWrittenPointers(const Instruction &inst,
 
   return false;
 }
+
+Join::Join(const BasicBlock *_place) : Desc(JoinDesc, _place) {}
+Effect::Effect(const Instruction *_inst)
+    : Desc(EffectDesc, _inst ? _inst->getParent() : nullptr), inst(_inst) {}
 
 void AllocaSSA::compute() {
   computePointerProvenance();
@@ -285,9 +367,9 @@ void AllocaSSA::compute() {
   while (keepGoing) {
 
     keepGoing = false;
-    region.for_blocks_rpo([&](const BasicBlock &currBlock) {
+    region.forBlocksRpo([&](const BasicBlock &currBlock) {
       auto itItem = worklist.find(&currBlock);
-      // skip this block if its not scheduled
+      // skip this block if it is not scheduled
       if (itItem == worklist.end())
         return true;
       worklist.erase(itItem);
@@ -353,11 +435,11 @@ void AllocaSSA::compute() {
           }
 
           // update monadic state of all aliased allocas
-          auto itEffect = instMap.find(&inst);
+          auto itEffect = instEffects.find(&inst);
           Effect *memEffect = nullptr;
-          if (itEffect == instMap.end()) {
+          if (itEffect == instEffects.end()) {
             memEffect = new Effect(&inst);
-            instMap[&inst] = memEffect;
+            instEffects[&inst] = memEffect;
             blockChanged = true;
           } else {
             memEffect = itEffect->second;
@@ -391,7 +473,7 @@ void AllocaSSA::compute() {
 
       // push successors
       auto &term = *currBlock.getTerminator();
-      for (int i = 0; i < (int)term.getNumSuccessors(); ++i) {
+      for (int i = 0; i < static_cast<int>(term.getNumSuccessors()); ++i) {
         worklist.insert(term.getSuccessor(i));
       }
 
@@ -400,7 +482,7 @@ void AllocaSSA::compute() {
   }
 }
 
-llvm::raw_ostream &Print(const AllocSet &allocs, llvm::raw_ostream &out) {
+raw_ostream &operator<<(raw_ostream &out, const AllocaInstSet &allocs) {
   bool first = true;
   for (const auto *alloc : allocs) {
     if (first) {
@@ -416,9 +498,10 @@ llvm::raw_ostream &Print(const AllocSet &allocs, llvm::raw_ostream &out) {
 }
 
 AllocaSSA::~AllocaSSA() {
-  for (auto itEff : instMap)
+  for (auto itEff : instEffects) {
     delete itEff.second;
-  instMap.clear();
+  }
+  instEffects.clear();
 }
 
 } // namespace hipsycl::compiler
