@@ -28,6 +28,7 @@ class Value;
 #include "llvm/Support/raw_ostream.h"
 
 #include <set>
+#include <map>
 #include <unordered_map>
 
 namespace hipsycl::compiler {
