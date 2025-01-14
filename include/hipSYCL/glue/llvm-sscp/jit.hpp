@@ -12,21 +12,21 @@
 #define HIPSYCL_GLUE_JIT_HPP
 
 #include "hipSYCL/common/appdb.hpp"
-#include "hipSYCL/common/hcf_container.hpp"
 #include "hipSYCL/common/debug.hpp"
-#include "hipSYCL/common/small_map.hpp"
 #include "hipSYCL/common/filesystem.hpp"
+#include "hipSYCL/common/hcf_container.hpp"
 #include "hipSYCL/compiler/llvm-to-backend/LLVMToBackend.hpp"
+#include "hipSYCL/runtime/application.hpp"
 #include "hipSYCL/runtime/error.hpp"
 #include "hipSYCL/runtime/kernel_cache.hpp"
 #include "hipSYCL/runtime/kernel_configuration.hpp"
-#include "hipSYCL/runtime/application.hpp"
-#include "jit-reflection/reflection_map.hpp"
-#include <cstddef>
-#include <vector>
+#include "hipSYCL/glue/llvm-sscp/jit-reflection/reflection_map.hpp"
+
 #include <atomic>
+#include <cstddef>
 #include <fstream>
 #include <string>
+#include <vector>
 
 namespace hipsycl {
 namespace glue {
@@ -119,7 +119,7 @@ private:
 
   bool _mapping_result = false;
   std::vector<void*> _mapped_data;
-  std::vector<std::size_t> _mapped_sizes; 
+  std::vector<std::size_t> _mapped_sizes;
 };
 
 class default_llvm_image_selector {
@@ -151,7 +151,7 @@ std::string select_image(const rt::hcf_kernel_info* kernel_info,
 using symbol_list_t = compiler::LLVMToBackendTranslator::SymbolListType;
 
 class runtime_linker {
-  
+
 public:
   using resolver = compiler::LLVMToBackendTranslator::ExternalSymbolResolver;
   using llvm_module_id = resolver::LLVMModuleId;
@@ -208,10 +208,10 @@ private:
     assert(_image_node_to_hcf_map.contains(hcf_image_node));
 
     auto v = _image_node_to_hcf_map.find(hcf_image_node);
-    
+
     if(v == _image_node_to_hcf_map.end())
       return {};
-    
+
     rt::hcf_object_id hcf_id = v->second;
     imported_symbols = hcf_image_node->get_as_list("imported-symbols");
 
@@ -239,7 +239,7 @@ inline rt::result compile(compiler::LLVMToBackendTranslator *translator,
 
   // Apply configuration
   if(translator->getKernels().size() == 1) {
-    // Currently we only can specialize kernel arguments for the 
+    // Currently we only can specialize kernel arguments for the
     // single-kernel code object model
     HIPSYCL_DEBUG_INFO << "jit: Configuring kernel "
                        << translator->getKernels()[0] << std::endl;
@@ -281,7 +281,7 @@ inline rt::result compile(compiler::LLVMToBackendTranslator *translator,
         option.second.int_value.has_value()
             ? std::to_string(option.second.int_value.value())
             : option.second.string_value.value();
-    
+
     translator->setBuildOption(option_name, option_value);
   }
 
@@ -301,13 +301,13 @@ inline rt::result compile(compiler::LLVMToBackendTranslator *translator,
     auto failure_dump_directory =
         rt::application::get_settings()
             .get<rt::setting::sscp_failed_ir_dump_directory>();
-            
+
     if(!failure_dump_directory.empty()) {
       static std::atomic<std::size_t> failure_index = 0;
       std::string filename = common::filesystem::join_path(
           failure_dump_directory,
           "failed_ir_" + std::to_string(failure_index) + ".bc");
-      
+
       std::ofstream out{filename.c_str(), std::ios::trunc|std::ios::binary};
       if(out.is_open()) {
         const std::string& failed_ir = translator->getFailedIR();
@@ -316,7 +316,7 @@ inline rt::result compile(compiler::LLVMToBackendTranslator *translator,
 
       ++failure_index;
     }
-    
+
     return rt::make_error(__acpp_here(),
                       rt::error_info{"jit::compile: Encountered errors:\n" +
                                  translator->getErrorLogAsString()});
