@@ -4,7 +4,7 @@ on: [push, pull_request]
 
 jobs:
   test-clang-based:
-    name: clang ${{ matrix.clang }}, ${{ matrix.os }}, CUDA ${{matrix.cuda}}, ROCm ${{matrix.rocm}}
+    name: ${{ matrix.os }}, Clang ${{ matrix.clang }}, CUDA ${{matrix.cuda}}, ROCm ${{matrix.rocm}}
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -31,7 +31,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y \
             cmake libboost-all-dev wget gpg curl ninja-build \
-            ocl-icd-opencl-dev libtbb-dev
+            ocl-icd-opencl-dev libtbb-dev libnuma-dev unzip
 
       - name: Install Level Zero
         run: |
@@ -42,7 +42,7 @@ jobs:
       - name: Install CUDA
         run: |
           mkdir -p /opt/AdaptiveCpp/cuda
-          wget -q -O cuda.sh http://developer.download.nvidia.com/compute/cuda/11.0.2/local_installers/cuda_11.0.2_450.51.05_linux.run
+          wget --progress=dot:giga -O cuda.sh http://developer.download.nvidia.com/compute/cuda/11.0.2/local_installers/cuda_11.0.2_450.51.05_linux.run
           sudo sh ./cuda.sh --override --silent --toolkit --no-man-page --no-drm --no-opengl-libs --installpath=/opt/AdaptiveCpp/cuda || true
           echo "CUDA Version ${{matrix.cuda}}" | sudo tee /opt/AdaptiveCpp/cuda/version.txt
 
@@ -50,19 +50,23 @@ jobs:
         run: |
           [[ ${{matrix.os}} == ubuntu-20.04 ]] && CODENAME=xenial
           [[ ${{matrix.os}} == ubuntu-22.04 ]] && CODENAME=jammy
-          sudo apt-get install -y libnuma-dev cmake unzip
+          [[ ${{matrix.os}} == ubuntu-24.04 ]] && CODENAME=noble
+
           wget -q -O - https://repo.radeon.com/rocm/rocm.gpg.key | sudo apt-key add -
           echo "deb [arch=amd64] https://repo.radeon.com/rocm/apt/${{matrix.rocm}} $CODENAME main" | sudo tee /etc/apt/sources.list.d/rocm.list
           printf 'Package: *\nPin: release o=repo.radeon.com\nPin-Priority: 600' | sudo tee /etc/apt/preferences.d/rocm-pin-600
-          sudo apt-get update
-          sudo apt-get install -y rocm-dev
+          sudo apt update
+          sudo apt install rocm-dev
 
       - name: Install LLVM
         run: |
           wget https://apt.llvm.org/llvm.sh
           chmod +x llvm.sh
           sudo ./llvm.sh ${{matrix.clang}}
-          sudo apt-get install -y libclang-${{matrix.clang}}-dev clang-tools-${{matrix.clang}} libomp-${{matrix.clang}}-dev
+          sudo apt-get install -y \
+            libclang-${{matrix.clang}}-dev \
+            clang-tools-${{matrix.clang}} \
+            libomp-${{matrix.clang}}-dev
 
       - name: Fix symlinks (Clang 16)
         if: ${{matrix.clang == 16}}
@@ -88,13 +92,12 @@ jobs:
       - name: Install AdaptiveCpp
         run: sudo cmake --install build
 
-      - name: Configure tests
+      - name: Build CPU tests
         run: |
           cmake \
             -S ${GITHUB_WORKSPACE}/tests \
             -B ${GITHUB_WORKSPACE}/build/tests-cpu \
             -DACPP_TARGETS="omp"
-
           cmake --build ${GITHUB_WORKSPACE}/build/tests-cpu
 
       - name: Build generic SSCP tests
@@ -105,7 +108,6 @@ jobs:
             -B ${GITHUB_WORKSPACE}/build/tests-sscp \
             -DACPP_TARGETS="generic" \
             -DWITH_PSTL_TESTS=ON
-
           cmake --build ${GITHUB_WORKSPACE}/build/tests-sscp
 
       - name: Build CUDA tests
@@ -123,7 +125,6 @@ jobs:
             -S ${GITHUB_WORKSPACE}/tests \
             -B ${GITHUB_WORKSPACE}/build/tests-rocm \
             -DACPP_TARGETS="hip:gfx906" \
-            -DAdaptiveCpp_DIR=${GITHUB_WORKSPACE}/build/install/lib/cmake/AdaptiveCpp \
             -DCMAKE_EXE_LINKER_FLAGS="-L/usr/lib/llvm-${{matrix.clang}}/lib"
           cmake --build ${GITHUB_WORKSPACE}/build/tests-rocm
 
@@ -153,17 +154,16 @@ jobs:
           ACPP_VISIBILITY_MASK="omp" ./pstl_tests
 
   test-nvcxx-based:
-    name: nvcxx ${{matrix.nvhpc}}, ${{matrix.os}}, CUDA ${{matrix.cuda}}
-    runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         os: [ubuntu-22.04]
         nvhpc: [23.9]
         cuda: [12.2]
+
+    name: nvcxx ${{matrix.nvhpc}}, ${{matrix.os}}, CUDA ${{matrix.cuda}}
+    runs-on: ${{ matrix.os }}
+
     steps:
-      - uses: actions/checkout@v4
-        with:
-          submodules: "recursive"
       - name: Free Disk Space (Ubuntu)
         uses: jlumbroso/free-disk-space@main
         with:
@@ -174,29 +174,54 @@ jobs:
           large-packages: true
           docker-images: true
           swap-storage: true
-      - name: install dependencies
+
+      - name: Checkout sources
+        uses: actions/checkout@v4
+        with:
+          submodules: "recursive"
+
+      - name: Install dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y cmake libboost-all-dev wget gpg curl
-      - name: install nvcxx
+
+      - name: Install nvcxx
         run: |
           MAJOR_VERSION=$(echo ${{matrix.nvhpc}} | sed 's/\..*//')
           MINOR_VERSION=$(echo ${{matrix.nvhpc}} | sed 's/.*\.//')
+
           curl https://developer.download.nvidia.com/hpc-sdk/ubuntu/DEB-GPG-KEY-NVIDIA-HPC-SDK | sudo gpg --dearmor -o /usr/share/keyrings/nvidia-hpcsdk-archive-keyring.gpg
           echo 'deb [signed-by=/usr/share/keyrings/nvidia-hpcsdk-archive-keyring.gpg] https://developer.download.nvidia.com/hpc-sdk/ubuntu/amd64 /' | sudo tee /etc/apt/sources.list.d/nvhpc.list
+
           sudo apt-get update -y
           sudo apt-get install -y nvhpc-${MAJOR_VERSION}-${MINOR_VERSION}
-      - name: build AdaptiveCpp
+
+      - name: Configure AdaptiveCpp
         run: |
-          mkdir build && cd build
           export NV_HPC_SDK_ROOT=/opt/nvidia/hpc_sdk/Linux_x86_64/${{matrix.nvhpc}}
           export NV_HPC_CUDA_ROOT=${NV_HPC_SDK_ROOT}/cuda/${{matrix.cuda}}
-          cmake -DNVCXX_COMPILER=${NV_HPC_SDK_ROOT}/compilers/bin/nvc++ -DWITH_CUDA_BACKEND=ON -DACPP_COMPILER_FEATURE_PROFILE=none -DCMAKE_INSTALL_PREFIX=`pwd`/install -DCUDA_TOOLKIT_ROOT_DIR=${NV_HPC_CUDA_ROOT} ..
-          make -j2 install
-          cp ${NV_HPC_CUDA_ROOT}/lib64/stubs/libcuda.so `pwd`/install/lib/libcuda.so
-          cp ${NV_HPC_CUDA_ROOT}/lib64/stubs/libcuda.so `pwd`/install/lib/libcuda.so.1
-      - name: build tests
+
+          cmake \
+            -S .. \
+            -B build \
+            -DNVCXX_COMPILER=${NV_HPC_SDK_ROOT}/compilers/bin/nvc++ \
+            -DWITH_CUDA_BACKEND=ON \
+            -DACPP_COMPILER_FEATURE_PROFILE=none \
+            -DCMAKE_INSTALL_PREFIX=`pwd`/install \
+            -DCUDA_TOOLKIT_ROOT_DIR=${NV_HPC_CUDA_ROOT}
+
+      - name: Build AdaptiveCpp
+        run: cmake --build build
+
+      - name: Install AdaptiveCpp
+        run: cmake --install build
+
+      - name: Build tests
         run: |
-          mkdir ${GITHUB_WORKSPACE}/build/tests-nvcxx
-          cmake -DACPP_TARGETS="cuda-nvcxx" -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_FLAGS="-DHIPSYCL_NO_FIBERS" -DAdaptiveCpp_DIR=${GITHUB_WORKSPACE}/build/install/lib/cmake/AdaptiveCpp ${GITHUB_WORKSPACE}/tests
-          make -j2
+          cmake \
+            -S ${GITHUB_WORKSPACE}/tests
+            -B ${GITHUB_WORKSPACE}/build/tests-nvcxx
+            -DCMAKE_BUILD_TYPE=Debug \
+            -DCMAKE_CXX_FLAGS="-DHIPSYCL_NO_FIBERS" \
+            -DACPP_TARGETS="cuda-nvcxx"
+          cmake --build ${GITHUB_WORKSPACE}/build/tests-nvcxx
