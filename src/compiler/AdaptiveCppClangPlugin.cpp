@@ -15,6 +15,14 @@
 #include "hipSYCL/compiler/SMCPCompatPass.hpp"
 #include "hipSYCL/compiler/cbs/PipelineBuilder.hpp"
 
+#include "hipSYCL/compiler/CompilationState.hpp"
+
+#include "clang/Frontend/FrontendPluginRegistry.h"
+
+#include "llvm/Pass.h"
+#include "llvm/Passes/PassBuilder.h"
+#include "llvm/Passes/PassPlugin.h"
+#include "llvm/Support/CommandLine.h"
 
 #ifdef HIPSYCL_WITH_STDPAR_COMPILER
 #include "hipSYCL/compiler/stdpar/MallocToUSM.hpp"
@@ -32,16 +40,9 @@
 #endif
 
 #ifdef HIPSYCL_WITH_REFLECTION_BUILTINS
-#include "hipSYCL/compiler/reflection/IntrospectStructPass.hpp"
 #include "hipSYCL/compiler/reflection/FunctionNameExtractionPass.hpp"
+#include "hipSYCL/compiler/reflection/IntrospectStructPass.hpp"
 #endif
-
-#include "clang/Frontend/FrontendPluginRegistry.h"
-
-#include "llvm/Pass.h"
-#include "llvm/Passes/PassBuilder.h"
-#include "llvm/Passes/PassPlugin.h"
-#include "llvm/Support/CommandLine.h"
 
 #if LLVM_VERSION_MAJOR < 16
 #include "llvm/IR/LegacyPassManager.h"

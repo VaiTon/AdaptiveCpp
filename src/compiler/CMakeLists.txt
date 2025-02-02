@@ -79,6 +79,8 @@ add_library(acpp-clang MODULE
   AdaptiveCppClangPlugin.cpp
   GlobalsPruningPass.cpp
   SMCPCompatPass.cpp
+  Frontend.cpp
+  utils/CompleteCallSet.cpp
   ${SSCP_COMPILER}
   ${STDPAR_COMPILER}
   ${REFLECTION_BUILTINS}
