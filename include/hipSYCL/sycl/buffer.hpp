@@ -1210,13 +1210,13 @@ private:
     if(!_impl->data->has_allocation(host_device)){
       if(this->has_property<property::buffer::use_optimized_host_memory>()){
         // TODO: Actually may need to use non-host backend here...
-        auto* allocator = rt->backends().get(host_device.get_backend())
+        auto* allocator = rt->backend_mgr().get(host_device.get_backend())
                 ->get_allocator(host_device);
         host_ptr = rt::allocate_host(allocator, alignof(T),
                                      _impl->data->get_num_elements().size() *
                                          sizeof(T));
       } else {
-        auto *allocator = rt->backends()
+        auto *allocator = rt->backend_mgr()
                               .get(host_device.get_backend())
                               ->get_allocator(host_device);
         host_ptr = rt::allocate_device(allocator, alignof(T),
@@ -1230,7 +1230,7 @@ private:
 
       _impl->data->add_empty_allocation(
           host_device, host_ptr,
-          rt->backends().get(host_device.get_backend())
+          rt->backend_mgr().get(host_device.get_backend())
               ->get_allocator(host_device),
           true /*takes_ownership*/);
     }
@@ -1272,7 +1272,7 @@ private:
     _impl->data->add_nonempty_allocation(detail::get_host_device(),
 					 const_cast<std::remove_const_t<T>*>(host_memory),
                                          _impl->requires_runtime.get()
-                                             ->backends()
+                                             ->backend_mgr()
                                              .get(host_device.get_backend())
                                              ->get_allocator(host_device),
                                          false /*takes_ownership*/);
@@ -1301,7 +1301,7 @@ private:
 
       rt::device_id dev = detail::extract_rt_device(desc.desc.dev);
       rt::backend_allocator *allocator = _impl->requires_runtime.get()
-                                             ->backends()
+                                             ->backend_mgr()
                                              .get(dev.get_backend())
                                              ->get_allocator(dev);
 

@@ -86,7 +86,7 @@ result ensure_allocation_exists(runtime *rt,
         bmem_req->get_data_region()->get_element_size();
 
     backend_allocator *allocator =
-        rt->backends().get(target_dev.get_backend())->get_allocator(target_dev);
+        rt->backend_mgr().get(target_dev.get_backend())->get_allocator(target_dev);
     // Currently we just pass 0 for the alignment which should
     // cause backends to align to the largest supported type.
     // TODO: A better solution might be to select a custom alignment
@@ -183,7 +183,7 @@ select_executor(runtime *rt, dag_node_ptr node, operation *op) {
         return std::make_pair(user_preferred_executor, preferred_device);
 
     return std::make_pair(
-        rt->backends().get(executor_backend)->get_executor(preferred_device),
+        rt->backend_mgr().get(executor_backend)->get_executor(preferred_device),
         preferred_device);
 
   } else {
@@ -193,7 +193,7 @@ select_executor(runtime *rt, dag_node_ptr node, operation *op) {
       return std::make_pair(user_preferred_executor, dev);
 
     return std::make_pair(
-        rt->backends().get(dev.get_backend())->get_executor(dev), dev);
+        rt->backend_mgr().get(dev.get_backend())->get_executor(dev), dev);
   }
 }
 

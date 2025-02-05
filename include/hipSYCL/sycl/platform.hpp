@@ -33,7 +33,7 @@ class platform {
 
 public:
   platform() : _platform{detail::get_host_device().get_backend(), 0} {}
-  
+
   platform(rt::platform_id platform)
   : _platform{platform} {}
 
@@ -43,9 +43,9 @@ public:
   template<class DeviceSelector>
   explicit platform(const DeviceSelector &deviceSelector) {
     auto dev = detail::select_devices(deviceSelector)[0];
-    
+
     rt::backend *b =
-        _requires_runtime.get()->backends().get(dev.get_backend());
+        _requires_runtime.get()->backend_mgr().get(dev.get_backend());
     std::size_t platform_index =
         b->get_hardware_manager()
             ->get_device(dev.AdaptiveCpp_device_id().get_id())
@@ -60,7 +60,7 @@ public:
   get_devices(info::device_type type = info::device_type::all) const {
     std::vector<device> result;
     rt::backend *b =
-        _requires_runtime.get()->backends().get(_platform.get_backend());
+        _requires_runtime.get()->backend_mgr().get(_platform.get_backend());
 
     int num_devices = b->get_hardware_manager()->get_num_devices();
     for (int dev = 0; dev < num_devices; ++dev) {
@@ -82,7 +82,7 @@ public:
       if (include_device)
         result.push_back(device{rt::device_id{b->get_backend_descriptor(), dev}});
     }
-  
+
     return result;
   }
 
@@ -98,7 +98,7 @@ public:
 
 
   bool is_host() const {
-    return _requires_runtime.get()->backends().get(_platform.get_backend())
+    return _requires_runtime.get()->backend_mgr().get(_platform.get_backend())
                ->get_backend_descriptor()
                .hw_platform == rt::hardware_platform::cpu;
   }
@@ -118,12 +118,12 @@ public:
     std::vector<platform> result;
     rt::runtime_keep_alive_token requires_runtime;
 
-    requires_runtime.get()->backends().for_each_backend([&](rt::backend *b) {
+    for (auto &b : requires_runtime.get()->backend_mgr()) {
       for (std::size_t i = 0;
            i < b->get_hardware_manager()->get_num_platforms(); ++i) {
         result.push_back(platform{b->get_unique_backend_id(), i});
       }
-    });
+    }
 
     return result;
   }
@@ -146,7 +146,7 @@ public:
     return AdaptiveCpp_hash_code();
   }
 
-  
+
   context khr_get_default_context() const;
 private:
   rt::platform_id _platform;
@@ -169,7 +169,7 @@ HIPSYCL_SPECIALIZE_GET_INFO(platform, name)
 {
   rt::backend_id b = _platform.get_backend();
   std::string platform_name =
-      _requires_runtime.get()->backends().get(b)->get_name();
+      _requires_runtime.get()->backend_mgr().get(b)->get_name();
   platform_name +=
       " (platform " + std::to_string(_platform.get_platform()) + ")";
       return platform_name;

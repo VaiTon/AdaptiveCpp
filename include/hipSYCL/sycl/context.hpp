@@ -132,7 +132,7 @@ public:
     rt::platform_id last_platform;
 
     this->_impl->devices.for_each_backend([&](rt::backend_id b) {
-      rt::backend* backend = this->_impl->requires_runtime.get()->backends().get(b);
+      rt::backend* backend = this->_impl->requires_runtime.get()->backend_mgr().get(b);
 
       for (std::size_t platform_index = 0;
            platform_index < backend->get_hardware_manager()->get_num_platforms();

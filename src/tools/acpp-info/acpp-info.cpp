@@ -18,28 +18,27 @@
 
 using namespace hipsycl;
 
-void list_backends(rt::runtime* rt) {
-  std::vector<rt::backend*> backends;
-  rt->backends().for_each_backend([&](rt::backend* b){
-    backends.push_back(b);
-  });
+void list_backends(rt::runtime *rt) {
 
-  for(std::size_t i = 0; i < backends.size(); ++i) {
-    std::cout << "Loaded backend " << i << ": " << backends[i]->get_name()
+  const auto backends = rt->backend_mgr().backends();
+
+  for (std::size_t i = 0; i < backends.size(); ++i) {
+    const auto &backend = backends[i];
+
+    std::cout << "Loaded backend " << i << ": " << backend->get_name()
               << std::endl;
-    int num_devices = backends[i]->get_hardware_manager()->get_num_devices();
-    if(num_devices == 0) {
+
+    const auto num_devices = backend->get_hardware_manager()->get_num_devices();
+    if (num_devices == 0) {
       std::cout << "  (no devices found)" << std::endl;
     }
 
-    for (int dev = 0;
-         dev < num_devices; ++dev) {
-      std::cout << "  Found device: "
-                << backends[i]
-                       ->get_hardware_manager()
-                       ->get_device(dev)
-                       ->get_device_name()
-                << std::endl;
+    for (size_t dev_idx = 0; dev_idx < num_devices; ++dev_idx) {
+      auto dev_name = backend->get_hardware_manager()
+                          ->get_device(dev_idx)
+                          ->get_device_name();
+
+      std::cout << "  Found device: " << dev_name << std::endl;
     }
   }
 }
@@ -63,7 +62,7 @@ void print_info(const std::string &info_name, const std::vector<T> &val,
   std::cout << std::endl;
 }
 
-void list_device_details(rt::device_id dev, rt::backend *b,
+void list_device_details(rt::device_id dev, std::shared_ptr<rt::backend> b,
                          rt::hardware_context *hw) {
 
   std::cout << "Device " << dev.get_id() << ":" <<std::endl;
@@ -161,9 +160,12 @@ void list_device_details(rt::device_id dev, rt::backend *b,
   PRINT_DEVICE_UINT_LIST_PROPERTY(sub_group_sizes);
 }
 
-void list_devices(rt::runtime* rt) {
-  rt->backends().for_each_backend([&](rt::backend* b){
-    std::size_t num_devices = b->get_hardware_manager()->get_num_devices();
+void list_devices(rt::runtime *rt) {
+  auto &backends = rt->backend_mgr().backends();
+
+  for (const auto &b : backends) {
+    const std::size_t num_devices =
+        b->get_hardware_manager()->get_num_devices();
 
     std::cout << "***************** Devices for backend " << b->get_name()
               << " *****************" << std::endl;
@@ -176,7 +178,7 @@ void list_devices(rt::runtime* rt) {
 
       std::cout << "\n" << std::endl;
     }
-  });
+  }
 }
 
 void print_help(const char* exe_name)

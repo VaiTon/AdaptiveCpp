@@ -29,12 +29,13 @@ void dag_unbound_scheduler::submit(dag_node_ptr node) {
     // when schedulers are constructed the runtime is typically
     // locked because it is just starting up, so this would
     // create a deadlock
-    _rt->backends().for_each_backend([this](backend *b) {
-      std::size_t num_devs = b->get_hardware_manager()->get_num_devices();
+    for (const auto &b : _rt->backend_mgr().backends()) {
+      const auto num_devs = b->get_hardware_manager()->get_num_devices();
+
       for (std::size_t i = 0; i < num_devs; ++i) {
         this->_devices.push_back(b->get_hardware_manager()->get_device_id(i));
       }
-    });
+    }
   }
 
   if(!node->get_execution_hints().has_hint<hints::bind_to_device>()){

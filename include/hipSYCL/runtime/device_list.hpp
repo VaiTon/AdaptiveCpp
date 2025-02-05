@@ -67,7 +67,7 @@ public:
     std::size_t count = 0;
 
     for_each_backend([&](backend_id b) {
-      if (_rt->backends().get(b)->get_hardware_platform() == plat)
+      if (_rt->backend_mgr().get(b)->get_hardware_platform() == plat)
         ++count;
     });
     

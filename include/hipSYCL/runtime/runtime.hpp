@@ -35,14 +35,14 @@ public:
   const dag_manager& dag() const
   { return _dag_manager; }
 
-  backend_manager &backends() { return _backends; }
+  backend_manager &backend_mgr() { return _backend_manager; }
 
-  const backend_manager &backends() const { return _backends; }
+  const backend_manager &backend_mgr() const { return _backend_manager; }
 
 private:
   // !! Attention: order is important, as backends have to be still present,
   // when the dag_manager is destructed!
-  backend_manager _backends;
+  backend_manager _backend_manager;
   dag_manager _dag_manager;
 };
 

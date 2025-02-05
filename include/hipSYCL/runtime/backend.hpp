@@ -64,22 +64,16 @@ class backend_manager
 {
 public:
   using backend_list_type =
-      std::vector<std::unique_ptr<backend>>;
+      std::vector<std::shared_ptr<backend>>;
 
   backend_manager();
   ~backend_manager();
-  
-  backend* get(backend_id) const;
+
+  const backend_list_type &backends() const { return _backends; }
+  std::shared_ptr<backend> get(backend_id) const;
+
   hw_model& hardware_model();
   const hw_model& hardware_model() const;
-
-  template<class F>
-  void for_each_backend(F f)
-  {
-    for(auto& b : _backends){
-      f(b.get());
-    }
-  }
 
 private:
   backend_loader _loader;

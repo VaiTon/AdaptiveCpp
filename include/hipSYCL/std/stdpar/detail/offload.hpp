@@ -105,7 +105,7 @@ bool validate_all_pointers(const Args&... args){
   auto& q = detail::single_device_dispatch::get_queue();
   auto* allocator = q.get_context()
       .AdaptiveCpp_runtime()
-      ->backends()
+      ->backend_mgr()
       .get(q.get_device().get_backend())
       ->get_allocator(q.get_device().AdaptiveCpp_device_id());
 

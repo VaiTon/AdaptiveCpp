@@ -65,7 +65,7 @@ private:
         _shared_scratch_cache{algorithms::util::allocation_type::shared},
         _host_scratch_cache{algorithms::util::allocation_type::host} {
           auto dev = _queue.get_device().AdaptiveCpp_device_id();
-          auto* be = _queue.get_context().AdaptiveCpp_runtime()->backends().get(
+          auto* be = _queue.get_context().AdaptiveCpp_runtime()->backend_mgr().get(
               dev.get_backend());
           if (be->get_hardware_manager()
                   ->get_device(dev.get_id())

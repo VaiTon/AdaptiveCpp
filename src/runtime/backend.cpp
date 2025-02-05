@@ -28,21 +28,24 @@ backend_manager::backend_manager()
 
   _loader.query_backends();
 
-  for (std::size_t backend_index = 0;
-       backend_index < _loader.get_num_backends(); ++backend_index) {
+  for (std::size_t b_idx = 0; b_idx < _loader.get_num_backends(); ++b_idx) {
 
     HIPSYCL_DEBUG_INFO << "Registering backend: '"
-                       << _loader.get_backend_name(backend_index) << "'..."
+                       << _loader.get_backend_name(b_idx) << "'..."
                        << std::endl;
-    backend *b = _loader.create(backend_index);
-    if (b) {
-      _backends.emplace_back(std::unique_ptr<backend>(b));
-    } else {
-      HIPSYCL_DEBUG_ERROR << "backend_manager: Backend creation failed" << std::endl;
+
+    backend *backend_ptr = _loader.create(b_idx);
+
+    if (backend_ptr == nullptr) {
+      HIPSYCL_DEBUG_ERROR << "backend_manager: Backend creation failed"
+                          << std::endl;
+      continue;
     }
+
+    _backends.emplace_back(std::shared_ptr<backend>(backend_ptr));
   }
-  
-  this->for_each_backend([](backend *b) {
+
+  for (const auto &b : _backends) {
     HIPSYCL_DEBUG_INFO << "Discovered devices from backend '" << b->get_name()
                        << "': " << std::endl;
     backend_hardware_manager* hw_manager = b->get_hardware_manager();
@@ -57,14 +60,15 @@ backend_manager::backend_manager()
         HIPSYCL_DEBUG_INFO << "    name: " << hw->get_device_name() << std::endl;
       }
     }
-  });
+  }
 
-  if(std::none_of(_backends.cbegin(), _backends.cend(), 
-                  [](const std::unique_ptr<backend>& b){
-                    return b->get_hardware_platform() == hardware_platform::cpu;
-                    }))
-  {
-    HIPSYCL_DEBUG_ERROR << "No CPU backend has been loaded. Terminating." << std::endl;
+  auto is_cpu = [](const std::shared_ptr<backend> &b) {
+    return b->get_hardware_platform() == hardware_platform::cpu;
+  };
+
+  if (std::none_of(_backends.cbegin(), _backends.cend(), is_cpu)) {
+    HIPSYCL_DEBUG_ERROR << "No CPU backend has been loaded. Terminating."
+                        << std::endl;
     std::terminate();
   }
 }
@@ -74,13 +78,16 @@ backend_manager::~backend_manager()
   _kernel_cache->unload();
 }
 
-backend *backend_manager::get(backend_id id) const {
-  auto it = std::find_if(_backends.begin(), _backends.end(),
-                         [id](const std::unique_ptr<backend> &b) -> bool {
-                           return b->get_backend_descriptor().id == id;
-                         });
-  
-  if(it == _backends.end()){
+std::shared_ptr<backend> backend_manager::get(backend_id id) const {
+
+  auto has_same_id = [id](const std::shared_ptr<backend> &b) {
+    return b->get_backend_descriptor().id == id;
+  };
+
+  const auto it =
+      std::find_if(_backends.begin(), _backends.end(), has_same_id);
+
+  if (it == _backends.end()) {
     register_error(
         __acpp_here(),
         error_info{"backend_manager: Requested backend is not available.",
@@ -88,7 +95,8 @@ backend *backend_manager::get(backend_id id) const {
 
     return nullptr;
   }
-  return it->get();
+
+  return *it;
 }
 
 hw_model &backend_manager::hardware_model()
@@ -96,7 +104,7 @@ hw_model &backend_manager::hardware_model()
   return *_hw_model;
 }
 
-const hw_model &backend_manager::hardware_model() const 
+const hw_model &backend_manager::hardware_model() const
 {
   return *_hw_model;
 }

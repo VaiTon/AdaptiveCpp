@@ -1151,7 +1151,7 @@ private:
       // so this might return nullptr.
       _impl->dedicated_inorder_executor =
           _impl->requires_runtime.get()
-              ->backends()
+              ->backend_mgr()
               .get(rt_dev.get_backend())
               ->create_inorder_executor(rt_dev, priority);
       

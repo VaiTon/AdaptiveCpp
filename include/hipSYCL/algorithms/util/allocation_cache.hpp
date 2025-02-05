@@ -53,7 +53,7 @@ public:
     std::lock_guard<std::mutex> lock{_mutex};
     
     for(auto& allocation : _allocations) {
-      auto* allocator = _rt.get()->backends()
+      auto* allocator = _rt.get()->backend_mgr()
           .get(allocation.dev.get_backend())
           ->get_allocator(allocation.dev);
       rt::deallocate(allocator, allocation.ptr);
@@ -69,7 +69,7 @@ private:
       result.dev = dev;
       result.size = min_size;
 
-      auto allocator = _rt.get()->backends()
+      auto allocator = _rt.get()->backend_mgr()
                        .get(dev.get_backend())
                        ->get_allocator(dev);
 

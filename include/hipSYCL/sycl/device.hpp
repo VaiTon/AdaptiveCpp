@@ -281,7 +281,9 @@ private:
   rt::runtime_keep_alive_token _requires_runtime;
 
   rt::hardware_context *get_rt_device() const {
-    auto ptr = _requires_runtime.get()->backends().get(_device_id.get_backend())
+    auto ptr = _requires_runtime.get()
+                   ->backend_mgr()
+                   .get(_device_id.get_backend())
                    ->get_hardware_manager()
                    ->get_device(_device_id.get_id());
     if (!ptr) {
